@@ -4,7 +4,6 @@ import socket
 import scapy
 import netifaces
 import nmap
-import coloredlogs, logging
 
 def getGate():
 	gate = netifaces.gateways()
@@ -14,25 +13,54 @@ def netScan():
 	map = nmap.PortScanner()
 	cidr =IPAddress(netprop['netmask']).netmask_bits()
 	map.scan(hosts=netprop['addr']+'/'+str(cidr) , arguments='-sn')
-	return map.all_hosts()		
+	retVal=[]
+
+	for h in map.all_hosts():
+		mac = "Not Found"
+		vend = "Not Found"
+		host = map[h]
+		if 'mac' in host['addresses']:
+			mac = host['addresses']['mac']
+			if mac in host['vendor']:
+				vend = host['vendor'][mac]
+
+		RHOST = {'ip': h, 'mac': mac, 'vendor': vend}
+		retVal.append(RHOST)
+
+	return retVal
 
 def printHosts(hosts):
 	x = 0
-	print(hosts)
-	hostnames = {}
+	hostnames = []
+	print ("{:<8} {:<23} {:<20} {:<15}".format('ID','HostName','IP', 'Device'))
 	for host in hosts:
-		log.debug(socket.gethostbyaddr(host))
+		try:
+			hostnames.append(socket.gethostbyaddr(host['ip'])[0])
+		except socket.herror:
+			hostnames.append('Hostname Unavailable')
+
+	
+
+	
+		print ("{:<8} {:<23} {:<20} {:<15}".format(str(x),hostnames[-1],str(host['ip']),host['vendor']))
+		x=x+1
+	return hostnames
 
 
-log = logging.getLogger(__name__)
-coloredlogs.install(level='DEBUG', logger=log)
+def spoofer(choice):
+	target = 0
+
+
+
+
+
 
 gateway = getGate()[0]
 interface = getGate()[1]
 
 #there is more info you can get from this like netmask addr broadcast just ask in [] when deref
 netprop = netifaces.ifaddresses(interface)[netifaces.AF_INET][0]
-print(netprop['netmask'])
 netHosts = netScan()
-printHosts(netHosts)
-
+print(type(netHosts[0]['vendor']))
+hostnames = printHosts(netHosts)
+spoofer(input("\nChoose an ID number you wish to DOS"))
